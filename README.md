@@ -4,9 +4,9 @@
 
 
 # Bugs
-3D videos play but are still playing in 2D
-Large over 5GB+ MP4 files have issues, they play but you will get stutters
-You need to wait for the funscript to upload to the device before you hit the play button, trying to think of a solution for this so it disables the Play button until the script is fully uplaoded
+- **3D videos play but are still playing in 2D
+- **Large over 5GB+ MP4 files have issues, they play but you will get stutters
+- **You need to wait for the funscript to upload to the device before you hit the play button, trying to think of a solution for this so it disables the Play button until the script is fully uplaoded
 
 Windows desktop application that synchronizes Autoblow device playback with local MP4 videos using `.funscript` files. Supports immersive 3D/VR video playback (VR360, VR180, 3D SBS/OU) with mouse-controlled camera navigation — while preserving full sync accuracy.
 
