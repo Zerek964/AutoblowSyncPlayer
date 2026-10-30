@@ -1,4 +1,4 @@
-# Autoblow Sync Player
+# Autoblow Sync Player - Built with Ollama AI Models
 
 <img width="990" height="697" alt="image" src="https://github.com/user-attachments/assets/c13d2b2c-d0b3-46ae-91a9-ee2d81ced246" />
 
