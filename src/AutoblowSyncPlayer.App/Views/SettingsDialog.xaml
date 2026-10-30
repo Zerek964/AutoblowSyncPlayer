@@ -1,0 +1,115 @@
+<Window x:Class="AutoblowSyncPlayer.App.Views.SettingsDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Settings" Height="450" Width="500"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        WindowStyle="SingleBorderWindow"
+        Icon="/Assets/AppIcon.png">
+
+    <Grid Margin="20">
+        <!-- Apply dark theme background to Settings content -->
+        <Grid.Background>
+            <SolidColorBrush Color="#1E1E1E"/>
+        </Grid.Background>
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+            <!-- General Settings Section -->
+            <GroupBox Header="General" Margin="0,0,0,15" Padding="10">
+                <StackPanel>
+                    <CheckBox x:Name="ChkAutoDetectScript" 
+                              Content="Auto-detect .funscript file matching video filename" 
+                              Margin="0,5,0,0"/>
+                    <CheckBox x:Name="ChkUploadConfirmation" 
+                              Content="Show confirmation dialog before uploading script to device" 
+                              Margin="0,5,0,0"/>
+                    <CheckBox x:Name="ChkLoggingEnabled" 
+                              Content="Enable detailed logging" 
+                              Margin="0,5,0,0"/>
+                </StackPanel>
+            </GroupBox>
+
+            <!-- Playback Settings Section -->
+            <GroupBox Header="Playback" Margin="0,0,0,15" Padding="10">
+                <StackPanel>
+                    <CheckBox x:Name="ChkResumeLastPosition" 
+                              Content="Resume playback from last position on restart" 
+                              Margin="0,5,0,0"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+                        <TextBlock Text="Default sync offset (ms):" VerticalAlignment="Center" Width="140"/>
+                        <TextBox x:Name="TxtDefaultOffset" 
+                                 Width="80" 
+                                 Text="0"
+                                 HorizontalAlignment="Left"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+                        <TextBlock Text="Device polling interval (ms):" VerticalAlignment="Center" Width="140"/>
+                        <TextBox x:Name="TxtPollingInterval" 
+                                 Width="80"
+                                 Text="1000"
+                                 HorizontalAlignment="Left"
+                                 ToolTip="How often to poll device state for timestamp sync"/>
+                    </StackPanel>
+                </StackPanel>
+            </GroupBox>
+
+            <!-- Appearance Settings Section -->
+            <GroupBox Header="Appearance" Margin="0,0,0,15" Padding="10">
+                <StackPanel>
+                    <CheckBox x:Name="ChkRememberWindowSize" 
+                              Content="Remember window size on close" 
+                              Margin="0,5,0,0"/>
+                    <CheckBox x:Name="ChkStartMinimized" 
+                              Content="Start minimized to tray (when available)" 
+                              Margin="0,5,0,0"/>
+                </StackPanel>
+            </GroupBox>
+
+            <!-- Status Info -->
+            <Border BorderBrush="#555555" BorderThickness="1" 
+                    CornerRadius="4" Padding="10" Margin="0,0,0,15">
+                <StackPanel>
+                    <TextBlock FontWeight="SemiBold" Margin="0,0,0,5">Settings Location</TextBlock>
+                    <TextBlock x:Name="TxtSettingsPath"
+                              FontSize="11"
+                              Foreground="#AAAAAA"
+                              TextWrapping="Wrap"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Buttons -->
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <Button Content="Save" Width="100" Margin="0,0,10,0" 
+                        Click="OnSave" IsDefault="True">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Background" Value="#0078D4"/>
+                            <Setter Property="Foreground" Value="White"/>
+                            <Setter Property="Padding" Value="10,5"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="{TemplateBinding Background}"
+                                                BorderBrush="{TemplateBinding BorderBrush}"
+                                                BorderThickness="1"
+                                                CornerRadius="3"
+                                                Padding="{TemplateBinding Padding}">
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background" Value="#1080DD"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+                <Button Content="Cancel" Width="100" IsCancel="True"/>
+            </StackPanel>
+        </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Window>

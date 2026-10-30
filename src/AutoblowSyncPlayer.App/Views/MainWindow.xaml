@@ -1,0 +1,578 @@
+﻿<Window x:Class="AutoblowSyncPlayer.App.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vlc="clr-namespace:LibVLCSharp.WPF;assembly=LibVLCSharp.WPF"
+        xmlns:vm="clr-namespace:AutoblowSyncPlayer.App.ViewModels"
+        xmlns:core="clr-namespace:AutoblowSyncPlayer.Core.Models;assembly=AutoblowSyncPlayer.Core"
+        xmlns:converters="clr-namespace:AutoblowSyncPlayer.App.Converters"
+        xmlns:controls="clr-namespace:AutoblowSyncPlayer.App.Controls"
+        Height="700" Width="1000"
+        WindowStartupLocation="CenterScreen"
+        MinWidth="800" MinHeight="500"
+        Icon="/AutoblowSyncPlayer.ico"
+        Background="{StaticResource BackgroundBrush}"
+        AllowDrop="True"
+        Drop="OnDrop"
+        DragOver="OnDragOver">
+
+    <Window.Title>
+        <Binding Path="SyncStatus" StringFormat="Autoblow Sync Player - {0}"/>
+    </Window.Title>
+
+    <!-- DataContext is set in code-behind via DI -->
+    <Window.Resources>
+        <!-- Converters -->
+        <converters:StereoEyeToBooleanConverter x:Key="StereoEyeToBooleanConverter"/>
+        
+        <!-- Flyout Panel Template for interactive menus -->
+        <Style x:Key="FlyoutPanelStyle" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource BackgroundSecondaryBrush}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="12"/>
+            <Setter Property="Margin" Value="6"/>
+            <Setter Property="MaxHeight" Value="500"/>
+        </Style>
+
+        <!-- Status Indicator Style (Green/Red dot) -->
+        <Style x:Key="StatusDotStyle" TargetType="Ellipse">
+            <Setter Property="Width" Value="10"/>
+            <Setter Property="Height" Value="10"/>
+            <Setter Property="Margin" Value="6,0,0,0"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Fill" Value="{StaticResource ErrorBrush}"/>
+        </Style>
+
+    </Window.Resources>
+
+    <DockPanel LastChildFill="True">
+        <!-- ============================================ -->
+        <!-- MENU BAR -->
+        <!-- ============================================ -->
+        <Menu DockPanel.Dock="Top" Background="{StaticResource BackgroundSecondaryBrush}" Foreground="{StaticResource TextBrush}" Padding="2">
+
+            <!-- File Menu (Existing) -->
+            <MenuItem Header="_File" Foreground="{StaticResource TextBrush}">
+                <MenuItem Header="_Load Video" Command="{Binding LoadVideoCommand}"/>
+                <MenuItem Header="_Load Script" Command="{Binding LoadScriptCommand}"/>
+                <MenuItem Header="_Restart" Command="{Binding RestartCommand}"/>
+                <Separator/>
+                <MenuItem Header="_Settings" Command="{Binding ShowSettingsCommand}"/>
+                <Separator/>
+                <MenuItem Header="E_xit" Command="{Binding ExitCommand}"/>
+            </MenuItem>
+
+            <!-- ============================================ -->
+            <!-- VIDEO MENU (with status indicator) -->
+            <!-- ============================================ -->
+            <MenuItem Style="{StaticResource FlyoutMenuItem}">
+                <MenuItem.Header>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Video"/>
+                        <Ellipse>
+                            <Ellipse.Style>
+                                <Style TargetType="Ellipse" BasedOn="{StaticResource StatusDotStyle}">
+                                    <Setter Property="Fill" Value="{StaticResource ErrorBrush}"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsVideoLoaded}" Value="true">
+                                            <Setter Property="Fill" Value="{StaticResource SuccessBrush}"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Ellipse.Style>
+                            <Ellipse.ToolTip>
+                                <ToolTip Content="{Binding IsVideoLoaded, Converter={StaticResource BooleanToConnectionStatusConverter}}"/>
+                            </Ellipse.ToolTip>
+                        </Ellipse>
+                    </StackPanel>
+                </MenuItem.Header>
+                
+                <!-- Video Flyout Panel -->
+                <Border Style="{StaticResource FlyoutPanelStyle}" Width="320">
+                    <StackPanel>
+                        <Button Command="{Binding LoadVideoCommand}" Content="Load Video..."/>
+                        <Button Command="{Binding RestartCommand}" Content="Restart" Margin="0,5,0,0"/>
+                        
+                        <Separator Margin="0,12"/>
+                        
+                        <TextBlock Text="Current Video:" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
+                        <TextBlock Text="{Binding VideoFileName}" FontWeight="SemiBold" Margin="0,4,0,0" TextWrapping="Wrap"/>
+                        <TextBlock Text="{Binding VideoDuration}" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0"/>
+                    </StackPanel>
+                </Border>
+            </MenuItem>
+
+            <!-- ============================================ -->
+            <!-- FUNSCRIPT MENU (with status indicator) -->
+            <!-- ============================================ -->
+            <MenuItem Style="{StaticResource FlyoutMenuItem}">
+                <MenuItem.Header>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Funscript"/>
+                        <Ellipse>
+                            <Ellipse.Style>
+                                <Style TargetType="Ellipse" BasedOn="{StaticResource StatusDotStyle}">
+                                    <Setter Property="Fill" Value="{StaticResource ErrorBrush}"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsScriptValid}" Value="true">
+                                            <Setter Property="Fill" Value="{StaticResource SuccessBrush}"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Ellipse.Style>
+                            <Ellipse.ToolTip>
+                                <ToolTip Content="{Binding IsScriptValid, Converter={StaticResource BooleanToConnectionStatusConverter}}"/>
+                            </Ellipse.ToolTip>
+                        </Ellipse>
+                    </StackPanel>
+                </MenuItem.Header>
+                
+                <!-- Funscript Flyout Panel -->
+                <Border Style="{StaticResource FlyoutPanelStyle}" Width="350">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="450" Background="Transparent" Padding="0">
+                            <StackPanel>
+                                <Button Command="{Binding LoadScriptCommand}" Content="Load Script..."/>
+                                
+                                <!-- Script duration warning -->
+                                <Border Margin="0,8,0,0" Padding="6" CornerRadius="3" Background="{StaticResource WarningBrush}"
+                                        Visibility="{Binding ScriptDurationWarning, Converter={StaticResource StringToVisibilityConverter}}">
+                                    <TextBlock Text="{Binding ScriptDurationWarning}" Foreground="Black" FontSize="11" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                                </Border>
+                                
+                                <!-- Script Info -->
+                                <StackPanel Margin="0,10,0,0" Visibility="{Binding IsScriptValid, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                    <TextBlock Text="{Binding ScriptTitle}" FontWeight="SemiBold" FontSize="13" TextWrapping="Wrap"/>
+                                    <TextBlock Text="{Binding ScriptDescription}" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,3,0,0"/>
+                                    <Separator Margin="0,8"/>
+                                    <Grid ColumnDefinitions="Auto,*" Margin="0,0,0,3">
+                                        <TextBlock Text="Duration:" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                        <TextBlock Text="{Binding ScriptDuration}" VerticalAlignment="Center" Grid.Column="1"/>
+                                    </Grid>
+                                    <Grid ColumnDefinitions="Auto,*" Margin="0,0,0,3">
+                                        <TextBlock Text="Actions:" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                        <TextBlock Text="{Binding ScriptActionCount}" VerticalAlignment="Center" Grid.Column="1"/>
+                                    </Grid>
+                                    <Grid ColumnDefinitions="Auto,*" Margin="0,0,0,3">
+                                        <TextBlock Text="Device:" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                        <TextBlock Text="{Binding ScriptDeviceType}" VerticalAlignment="Center" Grid.Column="1"/>
+                                    </Grid>
+                                </StackPanel>
+                                
+                                <!-- Validation Status -->
+                                <Border Margin="0,10,0,0" Padding="8" CornerRadius="3">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Background" Value="#1B5E20"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsScriptValid}" Value="false">
+                                                    <Setter Property="Background" Value="#7F0000"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <TextBlock Text="{Binding ValidationMessage}" TextWrapping="Wrap" FontSize="11"/>
+                                </Border>
+                            </StackPanel>
+                        </ScrollViewer>
+                </Border>
+            </MenuItem>
+
+            <!-- ============================================ -->
+            <!-- DEVICE CONNECTION MENU (with status indicator) -->
+            <!-- ============================================ -->
+            <MenuItem Style="{StaticResource FlyoutMenuItem}">
+                <MenuItem.Header>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Device Connection"/>
+                        <Ellipse>
+                            <Ellipse.Style>
+                                <Style TargetType="Ellipse" BasedOn="{StaticResource StatusDotStyle}">
+                                    <Setter Property="Fill" Value="{StaticResource ErrorBrush}"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDeviceConnected}" Value="true">
+                                            <Setter Property="Fill" Value="{StaticResource SuccessBrush}"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Ellipse.Style>
+                            <Ellipse.ToolTip>
+                                <ToolTip Content="{Binding IsDeviceConnected, Converter={StaticResource BooleanToConnectionStatusConverter}}"/>
+                            </Ellipse.ToolTip>
+                        </Ellipse>
+                    </StackPanel>
+                </MenuItem.Header>
+                
+                <!-- Device Connection Flyout Panel -->
+                <Border Style="{StaticResource FlyoutPanelStyle}" Width="380">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="480" Background="Transparent" Padding="0">
+                            <StackPanel>
+                                <!-- Token Input with show/hide -->
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="Token:" VerticalAlignment="Center" FontWeight="SemiBold" Width="45"/>
+                                    <TextBox Text="{Binding DeviceToken, UpdateSourceTrigger=PropertyChanged}"
+                                           ToolTip="Enter your Autoblow device token" MinWidth="150"
+                                           VerticalAlignment="Center"/>
+                                </StackPanel>
+                                
+                                <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+                                    <Button Command="{Binding SaveTokenCommand}" Content="Save" Width="70" VerticalAlignment="Center"/>
+                                    <Button Command="{Binding DeleteTokenCommand}" Content="Clear" Width="70" Margin="5,0,0,0" VerticalAlignment="Center"/>
+                                </StackPanel>
+                                
+                                <Separator Margin="0,12"/>
+                                
+                                <!-- Connect/Disconnect -->
+                                <StackPanel Orientation="Horizontal">
+                                    <Button Command="{Binding ConnectDeviceCommand}" 
+                                          IsEnabled="{Binding IsConnecting, Converter={StaticResource InverseBooleanConverter}}" MinWidth="80">
+                                        Connect
+                                    </Button>
+                                    <Button Command="{Binding DisconnectDeviceCommand}" 
+                                          IsEnabled="{Binding IsDeviceConnected}" MinWidth="80" Margin="5,0,0,0">
+                                        Disconnect
+                                    </Button>
+                                    <Button Command="{Binding RefreshConnectionCommand}" 
+                                          IsEnabled="{Binding IsDeviceConnected}" MinWidth="40" Margin="10,0,0,0"
+                                          ToolTip="Refresh connection status">
+                                        ↻
+                                    </Button>
+                                </StackPanel>
+                                
+                                <!-- Device Info Panel -->
+                                <Border Margin="0,12,0,0" Padding="10" CornerRadius="5" Background="{StaticResource BackgroundTertiaryBrush}">
+                                    <Border.Effect>
+                                        <DropShadowEffect BlurRadius="5" ShadowDepth="2" Opacity="0.3"/>
+                                    </Border.Effect>
+                                    <StackPanel>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock VerticalAlignment="Center" FontSize="14">
+                                                <Run Text="{Binding IsDeviceConnected, Converter={StaticResource BooleanToConnectivityIconConverter}, FallbackValue='●'}"/>
+                                            </TextBlock>
+                                            <TextBlock Text="  Device Status:" FontWeight="SemiBold" Margin="5,0,0,0" VerticalAlignment="Center"/>
+                                            <TextBlock Text="{Binding IsDeviceConnected, Converter={StaticResource BooleanToConnectionStatusConverter}}" 
+                                                     FontWeight="Bold" Margin="8,0,0,0" VerticalAlignment="Center"
+                                                     Foreground="{Binding IsDeviceConnected, Converter={StaticResource BooleanToConnectionStatusColorConverter}}"/>
+                                        </StackPanel>
+                                        
+                                        <!-- Device Details (shown when connected) -->
+                                        <StackPanel Visibility="{Binding IsDeviceConnected, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                            <Separator Margin="0,8"/>
+                                            <Grid ColumnDefinitions="Auto,*">
+                                                <TextBlock Text="Device:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                                                <TextBlock Text="{Binding DeviceType}" FontWeight="SemiBold" VerticalAlignment="Center" Grid.Column="1"/>
+                                            </Grid>
+                                            <Grid ColumnDefinitions="Auto,*" Margin="0,4,0,0">
+                                                <TextBlock Text="Cluster:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                                                <TextBlock Text="{Binding DeviceCluster}" VerticalAlignment="Center" Grid.Column="1"/>
+                                            </Grid>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+                                
+                                <!-- Upload Script Button -->
+                                <Button Command="{Binding UploadScriptCommand}" 
+                                      Margin="0,12,0,0" Padding="8,5"
+                                      Visibility="{Binding IsScriptValid, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                    <Button.Style>
+                                        <Style TargetType="Button">
+                                            <Setter Property="Background" Value="{StaticResource SuccessBrush}"/>
+                                            <Setter Property="Foreground" Value="White"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsScriptUploaded}" Value="true">
+                                                    <Setter Property="Background" Value="{StaticResource TextDisabledBrush}"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding IsDeviceConnected}" Value="false">
+                                                    <Setter Property="Background" Value="{StaticResource TextDisabledBrush}"/>
+                                                    <Setter Property="IsEnabled" Value="false"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="📤" FontSize="14"/>
+                                        <TextBlock Text=" Upload Script to Device" Margin="5,0,0,0"/>
+                                    </StackPanel>
+                                </Button>
+                                
+                                <!-- Upload Status -->
+                                <TextBlock Text="{Binding ScriptUploadStatus}" 
+                                         Margin="0,5,0,0" 
+                                         TextWrapping="Wrap"
+                                         FontStyle="Italic"
+                                         Visibility="{Binding ScriptUploadStatus, Converter={StaticResource StringToVisibilityConverter}}"/>
+                            </StackPanel>
+                    </ScrollViewer>
+                </Border>
+            </MenuItem>
+
+            <!-- ============================================ -->
+            <!-- 3D/VR CONTROLS MENU -->
+            <!-- ============================================ -->
+            <MenuItem Header="3D/VR Controls" Style="{StaticResource FlyoutMenuItem}">
+                <!-- 3D/VR Flyout Panel -->
+                <Border Style="{StaticResource FlyoutPanelStyle}" Width="350">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="480" Background="Transparent" Padding="0">
+                            <StackPanel>
+                                <!-- Video Mode Selector -->
+                                <TextBlock Text="Video Mode:" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                                <ComboBox ItemsSource="{x:Static vm:MainViewModel.AllVideoModes}"
+                                          SelectedValue="{Binding VideoMode}"
+                                          Margin="0,0,0,5"/>
+                                
+                                <!-- Detect Mode Button -->
+                                <Button Command="{Binding DetectVideoModeCommand}" 
+                                        Content="Detect Mode from Video"
+                                        Margin="0,0,0,10"
+                                        IsEnabled="{Binding IsVideoLoaded}"/>
+                                
+                                <!-- Stereo Eye Selection (for 3D modes) -->
+                                <TextBlock Text="Stereo Eye:" FontWeight="SemiBold" Margin="0,5,0,5"/>
+                                <StackPanel Margin="0,0,0,10">
+                                    <RadioButton Content="Auto" IsChecked="{Binding StereoEye, Converter={StaticResource StereoEyeToBooleanConverter}, ConverterParameter=Auto}" 
+                                                 GroupName="StereoEye"/>
+                                    <RadioButton Content="Left" IsChecked="{Binding StereoEye, Converter={StaticResource StereoEyeToBooleanConverter}, ConverterParameter=Left}"
+                                                 GroupName="StereoEye"/>
+                                    <RadioButton Content="Right" IsChecked="{Binding StereoEye, Converter={StaticResource StereoEyeToBooleanConverter}, ConverterParameter=Right}"
+                                                 GroupName="StereoEye"/>
+                                </StackPanel>
+                                
+                                <!-- Camera Mode Toggle -->
+                                <CheckBox Content="Camera Mode Enabled" 
+                                          IsChecked="{Binding CameraModeEnabled}" 
+                                          Margin="0,0,0,10"/>
+                                
+                                <!-- Camera Controls (visible when camera mode is enabled) -->
+                                <StackPanel Visibility="{Binding CameraModeEnabled, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                    <!-- Reset Camera Button -->
+                                    <Button Command="{Binding ResetCameraCommand}" 
+                                            Content="Reset Camera View" 
+                                            Margin="0,0,0,10"/>
+                                    
+                                    <!-- FOV Slider -->
+                                    <TextBlock Text="Field of View:" FontWeight="SemiBold" Margin="0,5,0,5"/>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Slider Value="{Binding CameraFov}" Minimum="30" Maximum="120" 
+                                                Width="150" Margin="0,0,10,0"/>
+                                        <TextBlock Text="{Binding CameraFov, StringFormat={}{0:F0}\u00B0}"/>
+                                    </StackPanel>
+                                    
+                                    <!-- Mouse Sensitivity Slider -->
+                                    <TextBlock Text="Mouse Sensitivity:" FontWeight="SemiBold" Margin="0,10,0,5"/>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Slider Value="{Binding MouseSensitivity}" Minimum="0.1" Maximum="3.0" 
+                                                Width="150" Margin="0,0,10,0" 
+                                                TickFrequency="0.1" IsSnapToTickEnabled="True"/>
+                                        <TextBlock Text="{Binding MouseSensitivity, StringFormat={}{0:F1}}"/>
+                                    </StackPanel>
+                                    
+                                    <!-- Invert Vertical Checkbox -->
+                                    <CheckBox Content="Invert Vertical Mouse" 
+                                              IsChecked="{Binding InvertVertical}" 
+                                              Margin="0,10,0,10"/>
+                                    
+                                    <!-- Camera View Info Display -->
+                                    <Border Padding="8" CornerRadius="3" Background="{StaticResource BackgroundTertiaryBrush}"
+                                            BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                                            Margin="0,0,0,5">
+                                        <StackPanel>
+                                            <TextBlock Text="Camera View" FontWeight="SemiBold" FontSize="11"/>
+                                            <TextBlock Text="{Binding CameraViewInfo}" FontSize="10" 
+                                                     Foreground="{StaticResource TextSecondaryBrush}" 
+                                                     Margin="0,3,0,0"/>
+                                        </StackPanel>
+                                    </Border>
+                                    
+                                    <!-- Instructions -->
+                                    <Border Padding="8" CornerRadius="3" Background="#1a3a5e"
+                                            Margin="0,0,0,5">
+                                        <TextBlock Text="Drag to look around&#10;Scroll to zoom in/out" 
+                                                 FontSize="10" TextWrapping="Wrap"/>
+                                    </Border>
+                                </StackPanel>
+                            </StackPanel>
+                    </ScrollViewer>
+                </Border>
+            </MenuItem>
+
+            <!-- ============================================ -->
+            <!-- SYNCHRONIZATION MENU -->
+            <!-- ============================================ -->
+            <MenuItem Header="Synchronization" Style="{StaticResource FlyoutMenuItem}">
+                <!-- Sync Flyout Panel -->
+                <Border Style="{StaticResource FlyoutPanelStyle}" Width="350">
+                    <StackPanel>
+                            <TextBlock Text="Sync Status:" FontWeight="SemiBold"/>
+                            <TextBlock Text="{Binding SyncStatus}" Margin="0,0,0,10"/>
+                            
+                            <!-- Sync readiness -->
+                            <Border Padding="8" CornerRadius="3" Margin="0,0,0,10"
+                                    Background="{StaticResource BackgroundTertiaryBrush}"
+                                    BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding IsSyncReady, Converter={StaticResource BooleanToSyncReadyIconConverter}}" FontSize="14"/>
+                                    <TextBlock Text="{Binding IsSyncReady, Converter={StaticResource BooleanToSyncReadyTextConverter}}" 
+                                             FontWeight="SemiBold" Margin="8,0,0,0"/>
+                                </StackPanel>
+                            </Border>
+                            
+                            <TextBlock Text="Offset (ms):" FontWeight="SemiBold"/>
+                            <StackPanel Orientation="Horizontal">
+                                <Slider Minimum="-5000" Maximum="5000" Value="{Binding SyncOffsetMs, Mode=TwoWay}" 
+                                      Width="200" Margin="0,5"/>
+                                <TextBlock Text="{Binding SyncOffsetMs}" VerticalAlignment="Center" Margin="10,0,0,0"/>
+                            </StackPanel>
+                            
+                            <Button Command="{Binding ResetOffsetCommand}" Content="Reset Offset" Width="100" Margin="0,5,0,0"/>
+
+                            <Button Command="{Binding EmergencyStopCommand}" 
+                                  Background="{StaticResource ErrorBrush}" Foreground="White" Margin="0,10,0,0">
+                                ⛔ Emergency Stop
+                            </Button>
+                        </StackPanel>
+                </Border>
+            </MenuItem>
+
+            <!-- Help Menu (Existing) -->
+            <MenuItem Header="_Help" Foreground="{StaticResource TextBrush}">
+                <MenuItem Header="_About" Command="{Binding ShowAboutCommand}"/>
+            </MenuItem>
+        </Menu>
+
+        <!-- ============================================ -->
+        <!-- ERROR NOTIFICATION PANEL -->
+        <!-- ============================================ -->
+        <Border DockPanel.Dock="Top" 
+                Background="{StaticResource BackgroundTertiaryBrush}"
+                BorderBrush="{StaticResource WarningBrush}" 
+                BorderThickness="0,0,0,2"
+                Padding="10"
+                Visibility="{Binding HasLoadError, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                    <TextBlock Text="Session Restore Warning" FontWeight="SemiBold" Foreground="{StaticResource WarningBrush}"/>
+                    <TextBlock Text="{Binding LoadErrorMessage}" Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" Margin="0,2,0,0"/>
+                </StackPanel>
+                <Button Grid.Column="1" Content="Dismiss" Command="{Binding ClearLoadErrorCommand}" 
+                        Padding="10,2" Foreground="{StaticResource TextBrush}"/>
+            </Grid>
+        </Border>
+
+        <!-- ============================================ -->
+        <!-- STATUS BAR (Bottom) -->
+        <!-- ============================================ -->
+        <Border DockPanel.Dock="Bottom" Height="40" Background="{StaticResource BackgroundSecondaryBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Sync readiness indicator -->
+                <Border Grid.Column="0" Padding="10,0" VerticalAlignment="Center">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Background" Value="{StaticResource ErrorBrush}"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsSyncReady}" Value="true">
+                                    <Setter Property="Background" Value="{StaticResource SuccessBrush}"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <TextBlock Text="●" Foreground="White" FontSize="16"
+                               ToolTip="{Binding IsSyncReady, Converter={StaticResource BooleanToConnectionStatusConverter}}"/>
+                </Border>
+
+                <!-- Status message -->
+                <TextBlock Grid.Column="1" Text="{Binding StatusMessage}"
+                         VerticalAlignment="Center" Margin="10,0" Foreground="{StaticResource TextBrush}"/>
+
+                <!-- Timestamp + volume controls -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0">
+                    <TextBlock Text="Video: " Foreground="{StaticResource TextSecondaryBrush}"/>
+                    <TextBlock Text="{Binding VideoTimestamp}" Foreground="{StaticResource TextBrush}" FontWeight="SemiBold"/>
+                    <TextBlock Text="  Diff: " Foreground="{StaticResource TextSecondaryBrush}" Margin="10,0,0,0"/>
+                    <TextBlock Text="{Binding SyncDifference}" Foreground="{StaticResource AccentBrush}" FontWeight="SemiBold"/>
+                    <TextBlock Text=" Volume" Foreground="{StaticResource TextSecondaryBrush}" Margin="15,0,0,0"/>
+                    <Button Command="{Binding ToggleMuteCommand}" Width="30" Padding="0"
+                            Content="{Binding IsMuted, Converter={StaticResource BooleanToMuteIconConverter}}"
+                            ToolTip="Mute/Unmute"/>
+                    <Slider Width="80" Minimum="0" Maximum="100" Value="{Binding Volume, Mode=TwoWay}"
+                            ToolTip="Volume" VerticalAlignment="Center"/>
+                    <Button Command="{Binding VolumeDownCommand}" Content="-" Width="22" Padding="0" Margin="3,0,0,0"/>
+                    <Button Command="{Binding VolumeUpCommand}" Content="+" Width="22" Padding="0" Margin="0,0,5,0"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ============================================ -->
+        <!-- MAIN CONTENT AREA (Single-column Grid) -->
+        <!-- ============================================ -->
+        <Grid Margin="10">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Row 0: Video Player (fills available space) -->
+            <Border Grid.Row="0" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" 
+                   Background="Black" CornerRadius="4" 
+                   MinHeight="200">
+                <Grid>
+                    <vlc:VideoView x:Name="videoView"
+                        Background="Black"
+                        MouseLeftButtonDown="OnVideoViewMouseLeftButtonDown"
+                        MouseMove="OnVideoViewMouseMove"
+                        MouseLeftButtonUp="OnVideoViewMouseLeftButtonUp"
+                        MouseWheel="OnVideoViewMouseWheelChanged"/>
+                </Grid>
+            </Border>
+            
+            <!-- Row 1: Controls - Buttons on left, Heatmap/Seek bar on right -->
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Playback Buttons (centered vertically in left column) -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal"
+                            HorizontalAlignment="Center" VerticalAlignment="Center"
+                            Margin="0,0,10,0">
+                    <Button Content="Play" Command="{Binding PlayCommand}"
+                            Margin="6,0,0,0"
+                            IsEnabled="{Binding IsVideoLoaded}"
+                            Width="60"/>
+                    <Button Content="Pause" Command="{Binding PauseCommand}"
+                            Margin="6,0,0,0"
+                            IsEnabled="{Binding IsPlaying}"
+                            Width="60"/>
+                    <Button Content="Stop" Command="{Binding StopCommand}"
+                            Margin="6,0,0,0"
+                            IsEnabled="{Binding IsVideoLoaded}"
+                            Width="60"/>
+                </StackPanel>
+
+                <!-- Heatmap + Seek Bar (fills right column) -->
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="0,10,0,0">
+                    <controls:FunscriptHeatmap
+                        x:Name="HeatmapControl"
+                        Activities="{Binding HeatmapActivities}"
+                        VideoProgress="{Binding VideoProgress}"
+                        HasScript="{Binding HasScript}"
+                        ScriptExceedsVideo="{Binding ScriptExceedsVideo}"
+                        Height="50"
+                        MinHeight="40"/>
+                    <Slider Value="{Binding VideoProgress, Mode=TwoWay}" 
+                            Minimum="0" Maximum="100" IsMoveToPointEnabled="True"
+                            Margin="0,8,0,0"/>
+                </StackPanel>
+            </Grid>
+        </Grid>
+    </DockPanel>
+</Window> 

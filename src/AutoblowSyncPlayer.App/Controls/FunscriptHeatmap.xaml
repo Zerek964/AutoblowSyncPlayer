@@ -1,0 +1,66 @@
+<UserControl x:Class="AutoblowSyncPlayer.App.Controls.FunscriptHeatmap"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignHeight="40" d:DesignWidth="800"
+             x:Name="root"
+             Background="#1E1E1E">
+    <Grid>
+        <!-- No-script placeholder -->
+        <TextBlock x:Name="PlaceholderText"
+                   Text="Load a funscript to see activity heatmap"
+                   Foreground="Gray"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center"
+                   FontStyle="Italic"
+                   Visibility="Collapsed" />
+
+        <!-- Heatmap rendering area -->
+        <Grid x:Name="HeatmapGrid" Visibility="Visible">
+            <!-- Heatmap image rendered via WriteableBitmap -->
+            <Image x:Name="HeatmapImage"
+                   Stretch="Fill"
+                   HorizontalAlignment="Stretch"
+                   VerticalAlignment="Stretch"
+                   SnapsToDevicePixels="True" />
+
+            <!-- Playback marker overlay -->
+            <Canvas x:Name="MarkerCanvas"
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch"
+                    ClipToBounds="True">
+                <Line x:Name="PlaybackMarker"
+                      X1="0" Y1="0" X2="0" Y2="1"
+                      Stroke="White" StrokeThickness="2"
+                      Stretch="Fill"
+                      Visibility="Visible" />
+                <!-- Marker triangle indicator -->
+                <Polygon Points="-6,0 6,0 0,-8"
+                         Fill="White"
+                         Stretch="Uniform"
+                         Width="12" Height="10"
+                         HorizontalAlignment="Center"
+                         VerticalAlignment="Top"
+                         Panel.ZIndex="2" />
+            </Canvas>
+        </Grid>
+
+        <!-- Script-exceeds-video warning overlay -->
+        <Border x:Name="DurationWarningBorder"
+                Background="#80FF6B35"
+                BorderBrush="#FF6B35"
+                BorderThickness="1"
+                Padding="4,2"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Bottom"
+                Visibility="Collapsed"
+                Panel.ZIndex="10">
+            <TextBlock Text="⚠ Script exceeds video duration"
+                       Foreground="White"
+                       FontSize="10"
+                       HorizontalAlignment="Center" />
+        </Border>
+    </Grid>
+</UserControl>

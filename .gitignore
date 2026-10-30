@@ -1,0 +1,40 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## publish output
+**/publish/
+**/publish-single-file/
+
+## IDE
+.vs/
+.vscode/
+*.pidb
+*.laststate
+
+## Test results
+TestResults/
+*.trx
+
+## Node (if any tooling uses it)
+node_modules/
+
+## Secrets and credentials
+*.token
+device-credentials.*
+
+## LibVLC native extraction (runtime only)
+libvlc/
+
+## OS
+Thumbs.db
+.DS_Store
+
+# Local test media
+*.mp4
+*.mkv
+*.avi

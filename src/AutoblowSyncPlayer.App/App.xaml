@@ -1,0 +1,393 @@
+<Application x:Class="AutoblowSyncPlayer.App.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:sys="clr-namespace:System;assembly=System.Runtime"
+             xmlns:conv="clr-namespace:AutoblowSyncPlayer.App.Converters">
+    <Application.Resources>
+        <ResourceDictionary>
+            <!-- Converters -->
+            <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+            <conv:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
+            <conv:ConnectionStatusConverter x:Key="BooleanToConnectionStatusConverter"/>
+            <conv:ConnectionStatusColorConverter x:Key="BooleanToConnectionStatusColorConverter"/>
+            <conv:ConnectivityIconConverter x:Key="BooleanToConnectivityIconConverter"/>
+            <conv:StringToVisibilityConverter x:Key="StringToVisibilityConverter"/>
+            <conv:BooleanToMuteIconConverter x:Key="BooleanToMuteIconConverter"/>
+            <conv:BooleanToVisibilityReversedConverter x:Key="BooleanToVisibilityReversedConverter"/>
+            <conv:BooleanToSyncReadyIconConverter x:Key="BooleanToSyncReadyIconConverter"/>
+            <conv:BooleanToSyncReadyTextConverter x:Key="BooleanToSyncReadyTextConverter"/>
+
+            <!-- Dark Theme Colors -->
+            <SolidColorBrush x:Key="BackgroundBrush" Color="#1E1E1E"/>
+            <SolidColorBrush x:Key="BackgroundSecondaryBrush" Color="#2D2D30"/>
+            <SolidColorBrush x:Key="BackgroundTertiaryBrush" Color="#3E3E42"/>
+            <SolidColorBrush x:Key="ControlBrush" Color="#3E3E42"/>
+            <SolidColorBrush x:Key="ControlMouseOverBrush" Color="#505055"/>
+            <SolidColorBrush x:Key="ControlPressedBrush" Color="#606065"/>
+            <SolidColorBrush x:Key="BorderBrush" Color="#505055"/>
+            <SolidColorBrush x:Key="TextBrush" Color="#FFFFFF"/>
+            <SolidColorBrush x:Key="TextSecondaryBrush" Color="#CCCCCC"/>
+            <SolidColorBrush x:Key="TextDisabledBrush" Color="#808080"/>
+
+            <!-- Accent colors -->
+            <SolidColorBrush x:Key="AccentBrush" Color="#0078D4"/>
+            <SolidColorBrush x:Key="AccentMouseOverBrush" Color="#1A8AE8"/>
+            <SolidColorBrush x:Key="ErrorBrush" Color="#FF6767"/>
+            <SolidColorBrush x:Key="SuccessBrush" Color="#57A64A"/>
+            <SolidColorBrush x:Key="WarningBrush" Color="#FFB679"/>
+
+            <!-- Shared styles -->
+
+            <Style TargetType="Button">
+                <Setter Property="Padding" Value="12,6"/>
+                <Setter Property="Margin" Value="2"/>
+                <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                <Setter Property="Background" Value="{StaticResource ControlBrush}"/>
+                <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+                <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    Padding="{TemplateBinding Padding}">
+                                <ContentPresenter HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center"/>
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+                <Style.Triggers>
+                    <Trigger Property="IsEnabled" Value="False">
+                        <Setter Property="Foreground" Value="#808080"/>
+                        <Setter Property="Background" Value="#5A5A5E"/>
+                    </Trigger>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="Background" Value="{StaticResource ControlMouseOverBrush}"/>
+                    </Trigger>
+                    <Trigger Property="IsPressed" Value="True">
+                        <Setter Property="Background" Value="{StaticResource ControlPressedBrush}"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+
+            <Style TargetType="Label">
+                <Setter Property="Margin" Value="2"/>
+                <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+            </Style>
+
+            <Style TargetType="TextBlock">
+                <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+            </Style>
+
+            <Style TargetType="TextBox">
+                <Setter Property="Background" Value="{StaticResource BackgroundTertiaryBrush}"/>
+                <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+                <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="Padding" Value="4"/>
+            </Style>
+
+            <Style TargetType="GroupBox">
+                <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+                <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+            </Style>
+
+            <Style TargetType="Slider">
+                <Setter Property="Foreground" Value="{StaticResource AccentBrush}"/>
+            </Style>
+
+            <!-- ============================================ -->
+            <!-- DARK-THEMED MENU ITEMS -->
+            <!-- ============================================ -->
+
+            <!-- Default MenuItem: Unified dark theme for all menu types -->
+            <Style TargetType="MenuItem">
+                <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+                <Setter Property="Background" Value="{StaticResource BackgroundSecondaryBrush}"/>
+                <Setter Property="Padding" Value="4"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="MenuItem">
+                            <Border x:Name="Bg"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    Padding="{TemplateBinding Padding}">
+                                <DockPanel>
+                                    <ToggleButton x:Name="HeaderToggle"
+                                                  IsChecked="{Binding IsSubmenuOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
+                                                  DockPanel.Dock="Top"
+                                                  Background="Transparent"
+                                                  BorderThickness="0"
+                                                  Padding="0"
+                                                  Foreground="{TemplateBinding Foreground}"
+                                                  Visibility="Collapsed">
+                                        <ContentPresenter ContentSource="Header"
+                                                          RecognizesAccessKey="True"
+                                                          Margin="8,4"/>
+                                    </ToggleButton>
+                                    <ContentPresenter x:Name="Content"
+                                                      ContentSource="Header"
+                                                      RecognizesAccessKey="True"
+                                                      Margin="8,4"/>
+                                    <Popup x:Name="Popup"
+                                           Placement="Bottom"
+                                           IsOpen="{TemplateBinding IsSubmenuOpen}"
+                                           AllowsTransparency="True"
+                                           Focusable="False"
+                                           PopupAnimation="Fade">
+                                        <Border Background="{StaticResource BackgroundSecondaryBrush}"
+                                                BorderBrush="{StaticResource BorderBrush}"
+                                                BorderThickness="1"
+                                                SnapsToDevicePixels="True">
+                                            <ItemsPresenter Margin="2"/>
+                                        </Border>
+                                    </Popup>
+                                </DockPanel>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <!-- Top-level header with submenu -->
+                                <Trigger Property="Role" Value="TopLevelHeader">
+                                    <Setter Property="Panel.ZIndex" Value="100"/>
+                                    <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+                                    <Setter TargetName="HeaderToggle" Property="Visibility" Value="Visible"/>
+                                    <Setter TargetName="Content" Property="Visibility" Value="Collapsed"/>
+                                    <Setter TargetName="Popup" Property="VerticalOffset" Value="0"/>
+                                    <Setter TargetName="Popup" Property="HorizontalOffset" Value="0"/>
+                                </Trigger>
+                                <!-- Top-level item without submenu -->
+                                <Trigger Property="Role" Value="TopLevelItem">
+                                    <Setter Property="Panel.ZIndex" Value="100"/>
+                                    <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+                                    <Setter TargetName="Popup" Property="IsOpen" Value="False"/>
+                                </Trigger>
+                                <!-- Submenu header with submenu -->
+                                <Trigger Property="Role" Value="SubmenuHeader">
+                                    <Setter TargetName="HeaderToggle" Property="Visibility" Value="Visible"/>
+                                    <Setter TargetName="Content" Property="Visibility" Value="Collapsed"/>
+                                    <Setter TargetName="Popup" Property="Placement" Value="Right"/>
+                                    <Setter TargetName="Popup" Property="VerticalOffset" Value="0"/>
+                                    <Setter TargetName="Popup" Property="HorizontalOffset" Value="0"/>
+                                </Trigger>
+                                <!-- Mouse over effects -->
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bg" Property="Background" Value="{StaticResource ControlMouseOverBrush}"/>
+                                </Trigger>
+                                <Trigger Property="IsSubmenuOpen" Value="True">
+                                    <Setter TargetName="Bg" Property="Background" Value="{StaticResource ControlPressedBrush}"/>
+                                </Trigger>
+                                <Trigger Property="IsSuspendingPopupAnimation" Value="true">
+                                    <Setter TargetName="Popup" Property="PopupAnimation" Value="None"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- FlyoutMenuItem: For custom flyout panels - inherits default style but ensures Popup works -->
+            <Style x:Key="FlyoutMenuItem" TargetType="MenuItem" BasedOn="{StaticResource {x:Type MenuItem}}">
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="MenuItem">
+                            <Border x:Name="Bg"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    Padding="{TemplateBinding Padding}">
+                                <DockPanel>
+                                    <ToggleButton x:Name="HeaderToggle"
+                                                  IsChecked="{Binding IsSubmenuOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
+                                                  DockPanel.Dock="Top"
+                                                  Background="Transparent"
+                                                  BorderThickness="0"
+                                                  Padding="0"
+                                                  Foreground="{TemplateBinding Foreground}">
+                                        <ContentPresenter ContentSource="Header"
+                                                          RecognizesAccessKey="True"
+                                                          Margin="8,4"/>
+                                    </ToggleButton>
+                                    <Popup x:Name="Popup"
+                                           Placement="Bottom"
+                                           IsOpen="{Binding IsSubmenuOpen, RelativeSource={RelativeSource TemplatedParent}}"
+                                           AllowsTransparency="True"
+                                           Focusable="False"
+                                           PopupAnimation="Fade">
+                                        <Border Background="{StaticResource BackgroundSecondaryBrush}"
+                                                BorderBrush="{StaticResource BorderBrush}"
+                                                BorderThickness="1"
+                                                SnapsToDevicePixels="True">
+                                            <ItemsPresenter Margin="0"/>
+                                        </Border>
+                                    </Popup>
+                                </DockPanel>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <!-- Top-level header: ensure Popup opens below menu bar -->
+                                <Trigger Property="Role" Value="TopLevelHeader">
+                                    <Setter Property="Panel.ZIndex" Value="100"/>
+                                    <Setter TargetName="Popup" Property="VerticalOffset" Value="0"/>
+                                    <Setter TargetName="Popup" Property="HorizontalOffset" Value="0"/>
+                                </Trigger>
+                                <Trigger Property="IsSuspendingPopupAnimation" Value="true">
+                                    <Setter TargetName="Popup" Property="PopupAnimation" Value="None"/>
+                                </Trigger>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bg" Property="Background" Value="{StaticResource ControlMouseOverBrush}"/>
+                                </Trigger>
+                                <Trigger Property="IsSubmenuOpen" Value="True">
+                                    <Setter TargetName="Bg" Property="Background" Value="{StaticResource ControlPressedBrush}"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style TargetType="ComboBox">
+                <Setter Property="Background" Value="{StaticResource BackgroundTertiaryBrush}"/>
+                <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+                <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="Padding" Value="4"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ComboBox">
+                            <Grid>
+                                <ToggleButton x:Name="ToggleButton"
+                                    Grid.Column="2"
+                                    Focusable="false"
+                                    IsChecked="{Binding Path=IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                    Background="{StaticResource BackgroundTertiaryBrush}"
+                                    BorderBrush="{StaticResource BorderBrush}">
+                                    <ToggleButton.Template>
+                                        <ControlTemplate TargetType="ToggleButton">
+                                            <Border Background="{TemplateBinding Background}"
+                                                BorderBrush="{TemplateBinding BorderBrush}"
+                                                BorderThickness="{TemplateBinding BorderThickness}">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition/>
+                                                        <ColumnDefinition Width="20"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Grid.Column="0"
+                                                        Margin="3,3,23,3"
+                                                        VerticalAlignment="Center"
+                                                        HorizontalAlignment="Left"
+                                                        Foreground="{StaticResource TextBrush}"
+                                                        Text="{Binding Path=SelectionBoxItem, RelativeSource={RelativeSource AncestorType=ComboBox}}"/>
+                                                    <Path x:Name="Arrow"
+                                                        Grid.Column="1"
+                                                        Fill="{StaticResource TextBrush}"
+                                                        HorizontalAlignment="Center"
+                                                        VerticalAlignment="Center"
+                                                        Data="M 0 0 L 4 4 L 8 0 Z"/>
+                                                </Grid>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </ToggleButton.Template>
+                                </ToggleButton>
+                                <ContentPresenter x:Name="ContentSite"
+                                    IsHitTestVisible="False"
+                                    Margin="3,3,23,3"
+                                    VerticalAlignment="Center"
+                                    HorizontalAlignment="Left"
+                                    Content="{TemplateBinding SelectionBoxItem}"
+                                    ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                    Visibility="Collapsed"/>
+                                <TextBox x:Name="PART_EditableTextBox"
+                                    Margin="3,3,23,3"
+                                    VerticalAlignment="Center"
+                                    HorizontalAlignment="Left"
+                                    Focusable="True"
+                                    Background="{StaticResource BackgroundTertiaryBrush}"
+                                    Foreground="{StaticResource TextBrush}"
+                                    Visibility="Hidden"
+                                    IsReadOnly="{TemplateBinding IsReadOnly}"/>
+                                <Popup x:Name="Popup"
+                                    Placement="Bottom"
+                                    IsOpen="{TemplateBinding IsDropDownOpen}"
+                                    AllowsTransparency="True"
+                                    Focusable="False"
+                                    PopupAnimation="Slide">
+                                    <Grid x:Name="DropDown"
+                                        SnapsToDevicePixels="True"
+                                        MinWidth="{TemplateBinding ActualWidth}"
+                                        MaxHeight="{TemplateBinding MaxDropDownHeight}">
+                                        <Border x:Name="DropDownBorder"
+                                            Background="{StaticResource BackgroundSecondaryBrush}"
+                                            BorderThickness="1"
+                                            BorderBrush="{StaticResource BorderBrush}"/>
+                                        <ScrollViewer Margin="4,6,4,6" SnapsToDevicePixels="True">
+                                            <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Contained"/>
+                                        </ScrollViewer>
+                                    </Grid>
+                                </Popup>
+                            </Grid>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="HasItems" Value="false">
+                                    <Setter TargetName="DropDownBorder" Property="MinHeight" Value="95"/>
+                                </Trigger>
+                                <Trigger Property="IsGrouping" Value="true">
+                                    <Setter Property="ScrollViewer.CanContentScroll" Value="false"/>
+                                </Trigger>
+                                <Trigger SourceName="Popup" Property="Popup.AllowsTransparency" Value="true">
+                                    <Setter TargetName="DropDownBorder" Property="Margin" Value="0,5,0,0"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style TargetType="ComboBoxItem">
+                <Setter Property="Background" Value="{StaticResource BackgroundTertiaryBrush}"/>
+                <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+                <Setter Property="Padding" Value="4,2"/>
+                <Setter Property="HorizontalContentAlignment" Value="Left"/>
+                <Setter Property="VerticalContentAlignment" Value="Center"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ComboBoxItem">
+                            <Border Background="{TemplateBinding Background}"
+                                    Padding="{TemplateBinding Padding}"
+                                    BorderThickness="0">
+                                <ContentPresenter
+                                    HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                    VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                    TextElement.Foreground="{StaticResource TextBrush}"/>
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+                <Style.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="Background" Value="{StaticResource ControlMouseOverBrush}"/>
+                        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+                    </Trigger>
+                    <Trigger Property="IsSelected" Value="True">
+                        <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
+                        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+
+            <!-- ComboBox Popup uses a separate visual tree; force dark theme there too -->
+            <Style TargetType="Popup">
+                <Setter Property="AllowsTransparency" Value="True"/>
+            </Style>
+
+            <Style x:Key="MenuPopup" TargetType="Popup">
+                <Setter Property="AllowsTransparency" Value="True"/>
+            </Style>
+
+            <Style TargetType="Menu">
+                <Setter Property="Background" Value="{StaticResource BackgroundSecondaryBrush}"/>
+                <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+            </Style>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

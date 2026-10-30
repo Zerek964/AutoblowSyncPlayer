@@ -1,0 +1,70 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>AutoblowSyncPlayer</AssemblyName>
+    <RootNamespace>AutoblowSyncPlayer.App</RootNamespace>
+    
+    <!-- Application metadata -->
+    <Version>1.0.1029.26</Version>
+    <Authors>AutoblowSyncPlayer Team</Authors>
+    <Description>Synchronize Autoblow device playback with local MP4 videos using .funscript files</Description>
+    <Copyright>Copyright © 2025</Copyright>
+    
+    <ApplicationIcon>AutoblowSyncPlayer.ico</ApplicationIcon>
+    
+    <!-- Self-contained publish settings -->
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <PublishReadyToRun>false</PublishReadyToRun>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\AutoblowSyncPlayer.Core\AutoblowSyncPlayer.Core.csproj" />
+    <ProjectReference Include="..\..\src\AutoblowSyncPlayer.Infrastructure\AutoblowSyncPlayer.Infrastructure.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="AutoblowSyncPlayer.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <Resource Include="AutoblowSyncPlayer.ico" />
+    <Resource Include="Assets\*.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="LibVLCSharp" Version="3.9.4" />
+    <PackageReference Include="LibVLCSharp.WPF" Version="3.9.4" />
+    <PackageReference Include="VideoLAN.LibVLC.Windows" Version="3.0.21" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="10.0.0" />
+    <PackageReference Include="Serilog" Version="4.2.0" />
+    <PackageReference Include="Serilog.Extensions.Logging" Version="9.0.0" />
+    <PackageReference Include="Serilog.Sinks.File" Version="6.0.0" />
+  </ItemGroup>
+
+  <!--
+    Explicitly include LibVLC native libraries for single-file publish.
+    The VideoLAN.LibVLC.Windows package uses Content items that don't survive single-file publish.
+    We use a PostPublish target to copy all native files from the NuGet package to libvlc/win-x64/ in the output.
+    Also copies Assets folder (button images) which are embedded by WPF but need to be extracted for pack URIs.
+  -->
+  <Target Name="CopyAssetsFolder" AfterTargets="Publish">
+    <ItemGroup>
+      <_LibVlcNativeFiles Include="$(NuGetPackageRoot)videolan.libvlc.windows\3.0.21\build\x64\**\*.*" />
+      <_AssetFiles Include="Assets\*.png" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_LibVlcNativeFiles)"
+          DestinationFiles="$(PublishDir)libvlc\win-x64\%(RecursiveDir)%(Filename)%(Extension)"
+          SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(_AssetFiles)"
+          DestinationFolder="$(PublishDir)Assets"
+          SkipUnchangedFiles="true" />
+  </Target>
+</Project>
