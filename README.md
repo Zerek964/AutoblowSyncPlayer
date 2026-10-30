@@ -155,4 +155,4 @@ Device tokens are securely stored using Windows DPAPI credential manager.
 
 ## License
 
-This project is for personal use only.
+GNU General Public License (GPL)
