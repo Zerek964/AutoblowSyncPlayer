@@ -1,5 +1,8 @@
 # Autoblow Sync Player
 
+<img width="990" height="697" alt="image" src="https://github.com/user-attachments/assets/c13d2b2c-d0b3-46ae-91a9-ee2d81ced246" />
+
+
 # Bugs
 3D videos play but are still playing in 2D
 Large over 5GB+ MP4 files have issues, they play but you will get stutters
